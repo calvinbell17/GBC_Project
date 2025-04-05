@@ -1,19 +1,20 @@
 FROM wordpress:latest
 
-# Set environment variables (for WordPress entrypoint)
-ENV WORDPRESS_DB_HOST=mywebdb.cujue22kskdi.us-east-1.rds.amazonaws.com
-ENV WORDPRESS_DB_USER=admin
-ENV WORDPRESS_DB_PASSWORD=Calvin17
-ENV WORDPRESS_DB_NAME=login
+RUN apt-get update && \
+    apt-get install -y curl unzip jq mariadb-client && \
+    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
+    unzip awscliv2.zip && \
+    ./aws/install && \
+    rm -rf awscliv2.zip aws && \
+    curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \
+    chmod +x wp-cli.phar && mv wp-cli.phar /usr/local/bin/wp && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Copy custom wp-config.php
-COPY wp-config.php /var/www/html/wp-config.php
-
-# Add custom template into the default theme (example: Twenty Twenty-Two)
 COPY theme/hello-world.php /var/www/html/wp-content/themes/twentytwentytwo/hello-world.php
+RUN chown -R www-data:www-data /var/www/html
 
-# Expose HTTP port
-EXPOSE 80
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Start Apache
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["apache2-foreground"]
